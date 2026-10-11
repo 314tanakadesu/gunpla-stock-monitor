@@ -1,9 +1,16 @@
+
 name: Gunpla Stock Monitor
 
 on:
   schedule:
     - cron: '*/5 * * * *'
   workflow_dispatch:
+    inputs:
+      test_notification:
+        description: 'Test notification'
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -16,5 +23,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
       - name: Check stock
         run: python monitor.py
+
+      - name: Test notification
+        if: ${{ inputs.test_notification == true }}
+        run: |
+          echo "::error::Gunpla notification test"
+          exit 1
