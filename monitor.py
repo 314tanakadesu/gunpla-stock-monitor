@@ -165,6 +165,7 @@ def check_amazon(url=URL):
                 "page_title": clean(next((n for n in root.walk() if n.tag == "title"), None))[:160],
                 "product_title_found": root.by_id("productTitle") is not None,
                 "buybox_found": root.by_id("buybox") is not None,
+                "page_message": clean(root)[:400],
             }
             print("ページ診断:", json.dumps(result["diagnostic"], ensure_ascii=False))
             return result
