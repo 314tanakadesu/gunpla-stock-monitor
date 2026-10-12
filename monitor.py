@@ -153,7 +153,21 @@ def check_amazon(url=URL):
     request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0", "Accept-Language": "ja-JP,ja;q=0.9"})
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
-            return parse_amazon(response.read().decode("utf-8", "replace"))
+            raw = response.read()
+            charset = response.headers.get_content_charset() or "utf-8"
+            html = raw.decode(charset, "replace")
+            result = parse_amazon(html)
+            root = Document(html).root
+            result["diagnostic"] = {
+                "http_status": response.status,
+                "bytes": len(raw),
+                "charset": charset,
+                "page_title": clean(next((n for n in root.walk() if n.tag == "title"), None))[:160],
+                "product_title_found": root.by_id("productTitle") is not None,
+                "buybox_found": root.by_id("buybox") is not None,
+            }
+            print("ページ診断:", json.dumps(result["diagnostic"], ensure_ascii=False))
+            return result
     except (urllib.error.URLError, TimeoutError, OSError) as error:
         return dict(status="確認失敗", detail=f"接続エラー: {type(error).__name__}", eligible=False)
 
