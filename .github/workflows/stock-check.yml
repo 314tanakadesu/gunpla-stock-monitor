@@ -15,17 +15,51 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: gunpla-stock-monitor
+  cancel-in-progress: false
+
 jobs:
   stock-check:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
+      - name: Restore notification history
+        uses: actions/cache/restore@v4
+        with:
+          path: .monitor-state
+          key: stock-state-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: stock-state-
+
       - name: Check stock
+        id: stock
         run: python monitor.py
+
+      - name: Save notification history
+        uses: actions/cache/save@v4
+        with:
+          path: .monitor-state
+          key: stock-state-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Save PC status report
+        uses: actions/upload-artifact@v4
+        with:
+          name: stock-status
+          path: |
+            status.json
+            status.md
+          retention-days: 7
+
+      - name: Stock alert - eligible offer detected
+        if: steps.stock.outputs.notify == 'true'
+        run: |
+          echo "::error::HG Gundam Virsago: eligible offer at or below JPY 3190 including shipping. Open the run summary."
+          exit 1
 
       - name: Test notification
         if: ${{ inputs.test_notification == true }}
