@@ -41,6 +41,11 @@ class MonitorTests(unittest.TestCase):
     def test_preorder(self):
         self.assertTrue(parse_amazon(page(button='<input name="submit.preorder">'))["eligible"])
 
+    def test_continue_shopping_challenge(self):
+        result = parse_amazon('<title>Amazon.co.jp</title><p>下のボタンをクリックしてショッピングを続けてください</p>')
+        self.assertFalse(result['eligible'])
+        self.assertIn('アクセス確認画面', result['detail'])
+
     def test_stockout(self):
         self.assertEqual(parse_amazon(page().replace("在庫あり", "現在在庫切れ"))["status"], "在庫なし")
 

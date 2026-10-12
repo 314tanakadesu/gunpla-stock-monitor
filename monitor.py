@@ -92,8 +92,10 @@ def parse_amazon(html):
     def stop(status, detail):
         result.update(status=status, detail=detail)
         return result
-    if root.by_id("captchacharacters") or "ご迷惑をおかけしています" in clean(root):
-        return stop("判定不能", "Amazonのアクセス確認画面です")
+    if (root.by_id("captchacharacters") or "ご迷惑をおかけしています" in clean(root)
+            or "ショッピングを続けてください" in clean(root)
+            or "Click the button below to continue shopping" in clean(root)):
+        return stop("判定不能", "Amazonのアクセス確認画面が返されました。商品情報は取得できていません")
     if "ガンダムヴァサーゴ" not in clean(root.by_id("productTitle") or root.by_id("title")):
         return stop("判定不能", "対象の商品タイトルを確認できません")
     box = root.by_id("buybox") or root.by_id("desktop_buybox")
@@ -165,7 +167,6 @@ def check_amazon(url=URL):
                 "page_title": clean(next((n for n in root.walk() if n.tag == "title"), None))[:160],
                 "product_title_found": root.by_id("productTitle") is not None,
                 "buybox_found": root.by_id("buybox") is not None,
-                "page_message": clean(root)[:400],
             }
             print("ページ診断:", json.dumps(result["diagnostic"], ensure_ascii=False))
             return result

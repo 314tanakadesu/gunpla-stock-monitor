@@ -3,3 +3,6 @@ __pycache__/
 status.json
 status.md
 amazon-sample.html
+.pc-monitor-state.json
+pc-status.json
+pc-check.html
